@@ -1,0 +1,12 @@
+Create a Python script that serves as a setup and run file for a Streamlit application named "Project KAVACH". 
+
+The script should perform the following actions automatically:
+1. Install necessary dependencies (streamlit, cryptography) silently.
+2. Write the main application code into a file named 'app.py'.
+3. Setup a Cloudflare Tunnel (cloudflared) to expose the local Streamlit port (8501) to the web.
+
+The 'app.py' (the actual application) should have the following features:
+- A dark mode UI with a "Hacker/Terminal" aesthetic (Black background, Green text).
+- Two tabs: "ENCRYPT" and "DECRYPT".
+- ENCRYPT Tab: Allow users to upload an image, enter a secret message, and a password. Use AES encryption to encrypt the text, then hide it inside the image using LSB (Least Significant Bit) steganography. Provide a download button for the secure image.
+- DECRYPT Tab: Allow users to upload the steganographic image and enter the password. Extract the hidden bits, decrypt the text, and display the secret message.
