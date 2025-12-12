@@ -1,20 +1,3 @@
-
-# ==========================================
-# 1. INSTALL DEPENDENCIES & SETUP
-# ==========================================
-import os
-import subprocess
-import time
-import re
-
-print("⚙️ Installing dependencies... (This takes about 1 minute)")
-# Install Streamlit & Cryptography silently
-subprocess.run(["pip", "install", "streamlit", "cryptography"], stdout=subprocess.DEVNULL)
-
-# ==========================================
-# 2. WRITE APP CODE (Project KAVACH)
-# ==========================================
-app_code = """
 import streamlit as st
 from PIL import Image
 import io
@@ -25,18 +8,20 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
 
+# --- PAGE CONFIG ---
 st.set_page_config(page_title="Project KAVACH", page_icon="🛡️", layout="centered")
 
-# Custom CSS
-st.markdown(\"\"\"
+# --- CUSTOM CSS ---
+st.markdown("""
     <style>
     .stApp {background-color: #0e1117; color: #00ff00;}
     .stTextInput>div>div>input {color: #00ff00; background-color: #262730;}
     .stButton>button {border: 1px solid #00ff00; color: #00ff00; background-color: transparent;}
     h1, h2, h3 {font-family: 'Courier New', monospace; color: #00ff00;}
     </style>
-\"\"\", unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
+# --- HELPER FUNCTIONS ---
 def derive_key(password, salt):
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=default_backend())
     return kdf.derive(password.encode())
@@ -93,8 +78,10 @@ def decode_image(image):
             return decoded_data[:-5]
     return ""
 
+# --- MAIN UI ---
 st.title("🛡️ PROJECT KAVACH")
 tab1, tab2 = st.tabs(["🔒 ENCRYPT", "🔓 DECRYPT"])
+
 with tab1:
     st.write("### Hide Data")
     uploaded_file = st.file_uploader("Upload Image", type=["png", "jpg"])
@@ -126,52 +113,3 @@ with tab2:
                     st.warning("No message found.")
             except:
                 st.error("Access Denied.")
-"""
-
-with open("app.py", "w") as f:
-    f.write(app_code)
-print("✅ App code saved.")
-
-# ==========================================
-# 3. RUN WITH CLOUDFLARE TUNNEL (Stable)
-# ==========================================
-# 1. Download Cloudflared
-if not os.path.exists("cloudflared"):
-    print("☁️ Setting up Cloudflare Tunnel...")
-    subprocess.run(["wget", "-q", "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64", "-O", "cloudflared"])
-    subprocess.run(["chmod", "+x", "cloudflared"])
-
-# 2. Run Streamlit in Background
-print("🚀 Starting Streamlit...")
-subprocess.Popen(["streamlit", "run", "app.py", "--server.port", "8501"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-# 3. Run Tunnel & Capture URL
-print("🔗 Creating secure link... (Waiting for URL)")
-with open("tunnel.log", "w") as log_file:
-    tunnel_process = subprocess.Popen(["./cloudflared", "tunnel", "--url", "http://localhost:8501"], stdout=subprocess.DEVNULL, stderr=log_file)
-
-# 4. Wait loop to find the URL
-found_url = None
-for i in range(20): # Try for 20 seconds
-    time.sleep(1)
-    try:
-        with open("tunnel.log", "r") as f:
-            content = f.read()
-            # Regex to find the trycloudflare URL
-            match = re.search(r'https://[a-zA-Z0-9-]+\.trycloudflare\.com', content)
-            if match:
-                found_url = match.group(0)
-                break
-    except:
-        pass
-
-if found_url:
-    print("\n" + "="*40)
-    print("    CLICK THIS LINK TO VIEW YOUR APP:")
-    print(f"    {found_url}")
-    print("="*40 + "\n")
-else:
-    print("\n❌ Could not find URL. Printing logs for debugging:")
-    with open("tunnel.log", "r") as f:
-        print(f.read())
-      
